@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+
+  "name": "ConvertCups",
+  "description": "This extension converts cup measurements to litres",
+  "version": "0.1",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_title": "Convert cups to litres"
+  },
+  "background":{
+    "scripts":["background.js"]
+  },
+  "options_page": "fg-convertcups-options.htm",
+  "options_ui": {
+    "page": "fg-convertcups-options.htm",
+    "chrome_style": true
+  }
+}
