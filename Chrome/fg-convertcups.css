@@ -22,7 +22,11 @@ span.fg-converted-cup:hover span { display: inline; }
 /* options page */
 body.fg-convertcups-options { padding: 0.5em; }
 body.fg-convertcups-options h2 { font-size: 1.33em; margin-bottom: 1em; }
-body.fg-convertcups-options #status { min-height: 4em; margin: 0.5em 0; font-weight: bold; }
+body.fg-convertcups-options #status {
+  position: absolute; bottom: 0; right: 0.5em;
+  /*min-height: 4em; */margin: 0.5em 0;
+  font-weight: bold; color: crimson;
+}
 body.fg-convertcups-options #status span { color: crimson; display: block; margin-top: 0.5em; }
 body.fg-convertcups-options label {
   display: inline-block; position: relative; margin-bottom: 0.5em;

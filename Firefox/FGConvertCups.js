@@ -2,10 +2,12 @@ var
 DEFAULT_CUPSIZE = 240, // default
 mlToLitreMult = 0.001,
 litreRounding = 10, // 10 = 1 decimal place, 100 = 2 dec. pl
-patternCups = "",
-cupsToMlMult, regExpCups, convertCupString, replaceTextInNode, messageHandler;
+celsiusRounding = 10, // 10 = round to nearest 10
+patternCups = "", patternFahr = "",
+cupsToMlMult, convertCupString, convertFahrString, replaceTextInNode, messageHandler,
+regExpCups, regExpFahr, regExpFahrCheap;
 
-// build the pattern for the regular expression
+// build the pattern for the cups regular expression
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
 patternCups += "(?!\\b)?"; // word boundary (noncapturing optional group)
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
@@ -18,9 +20,17 @@ patternCups += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;)?"; // HTML hexadecimal 
 patternCups += "\\s?"; // optional whitespace character
 patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
 
-console.log(patternCups);
+// build the pattern for the fahrenheit regular expression
+patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
+patternFahr += "(?:"; // begin noncapturing group
+patternFahr += "(?:(?:°|degrees|deg|&#176;|&deg;)\\s?)"; // noncapturing degree group with/without whitespace
+patternFahr += "|"; // OR seperator
+patternFahr += "(?:(?:farhenheit|fahrenheit|f\\b))"; // noncapturing fahrenheit group
+patternFahr += ")+"; // require at least one of two previous groups
 
 regExpCups = new RegExp(patternCups, 'ig');
+regExpFahr = new RegExp(patternFahr, 'ig');
+regExpFahrCheap = new RegExp(/\d+(.+)?(f|d|°|&#176;|&deg;)+/, 'ig');
 
 // get cup size from options
 chrome.storage.local.get(
@@ -61,12 +71,9 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
     fraction = 0.75;
   }
 
-  // HACK fix situation where 'cup' is part of another word eg 'beefcup'
-  if (!wholeNum && !fraction) { return match; }
-
   ml = Math.round((wholeNum + fraction) * cupsToMlMult);
   if (ml > 1000) { // show big values as litres not ml
-    str = (Math.round((ml * mlToLitreMult) * litreRounding) / litreRounding) + "l";
+    str = (Math.round((ml * mlToLitreMult) * litreRounding) / litreRounding) + "L";
   } else {
     str = ml + "ml";
   }
@@ -77,16 +84,33 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
   return str;
 };
 
+convertFahrString = function(match, degrees) {
+  var celsius, str;
+  // TODO make sure temperature is within  sensible range for oven
+  celsius = Math.round(((degrees-32) * (5/9)) / celsiusRounding) * celsiusRounding;
+  str = celsius + "&deg;C";
+  str = "<span class='fg-converted-cup'>" + str;
+  str += "<span>" + match + "</span>";
+  str += "</span>";
+  return str;
+};
+
 // replaceTextInNode scans through a node replacing all cups with millilitres
 // then recurses into any child nodes
 replaceTextInNode = function(parentNode) {
-  var node;
+  var node, nodeParentElement;
   for (var i = parentNode.childNodes.length-1; i >= 0; i--){
     node = parentNode.childNodes[i];
 
     if (node.nodeType == Element.TEXT_NODE && node.parentElement) {
+      nodeParentElement = node.parentElement;
       if (node.textContent.toLowerCase().indexOf("cup") !== -1) { // optimisation to prevent slow RegExp being run against every text node
-        node.parentElement.innerHTML = node.parentElement.innerHTML.replace(regExpCups, convertCupString);
+        nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpCups, convertCupString);
+      }
+      // do simple check for something that looks like a fahrenheit temp first
+      // to save doing expensive replace with complex regex
+      if (node.textContent.match(regExpFahrCheap)) {
+        nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpFahr, convertFahrString);
       }
     } else if (node.nodeType == Element.ELEMENT_NODE){
       //  recurse into child nodes

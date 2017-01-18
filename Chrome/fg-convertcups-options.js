@@ -1,34 +1,21 @@
-var save_options, restore_options;
+var
+backgroundPage = chrome.extension.getBackgroundPage(),
+onStorageSet, onStorageGet,
+getCheckedRadio, setCheckedRadio,
+save_options, restore_options;
 
-// Saves options to chrome.storage.local.
+// Saves options to chrome.storage.local
 save_options = function() {
-  var
-  radios = document.getElementsByName('cupsize'),
-  length = radios.length,
-  i, cupsize, convertedTabID_ar;
-  console.log("save_options()");
-
-  for (i = 0; i < length; i++) {
-    if (radios[i].checked) {
-      // console.log(radios[i].value);
-      cupsize = radios[i].value;
-      break;
-    }
-  }
+  var  convertedTabID_ar;
 
   chrome.storage.local.set({
-    chosencupsize: cupsize
-  }, function() {
-    // Update status to let user know options were saved.
-    var status = document.getElementById('status');
-    status.innerHTML = 'Options saved.<span>Refresh any recipe pages - old sizes will still be showing!</span>';
-    setTimeout(function() {
-      status.textContent = '';
-    }, 7000);
-  });
-  // reload page NOT WORKING YET
-  convertedTabID_ar = chrome.extension.getBackgroundPage().convertedTabID_ar;
+    cupsize: getCheckedRadio('cup-size'),
+    measurementConvertTo: getCheckedRadio('measurement-convert-to'),
+    temperatureConvertTo: getCheckedRadio('temperature-convert-to')
+  }, onStorageSet);
+
   // tell all converted tabs about change option change
+  convertedTabID_ar = backgroundPage.convertedTabID_ar;
   for (i = 0; i < convertedTabID_ar.length; i++) {
     chrome.tabs.sendMessage(convertedTabID_ar[i], {
       message: "optionsSaved"
@@ -36,26 +23,53 @@ save_options = function() {
   }
 };
 
-// Restores select box and checkbox state using the preferences
-// stored in chrome.storage.
+// Restores form using the preferences stored in chrome.storage.local
 restore_options = function() {
-  console.log("restore_options()");
-  // Use default value cupsize = '240'
   chrome.storage.local.get({
-    chosencupsize: '240'
-  }, function(items) {
-    var
-    radios = document.getElementsByName('cupsize'),
-    length = radios.length,
-    i;
+    cupsize: backgroundPage.constants.DEFAULT_CUPSIZE,
+    measurementConvertTo: backgroundPage.constants.DEFAULT_MEASUREMENT_CONVERT_TO,
+    temperatureConvertTo: backgroundPage.constants.DEFAULT_TEMPERATURE_CONVERT_TO
+  }, onStorageGet);
+};
 
-    for (i = 0; i < length; i++) {
-      if (radios[i].value == items.chosencupsize) {
-        radios[i].checked = true;
-        break;
-      }
+onStorageSet = function() {
+  // Update status to let user know options were saved.
+  var status = document.getElementById('status');
+  status.innerHTML = 'Options saved';
+  setTimeout(function() {
+    status.textContent = '';
+  }, 7000);
+};
+
+onStorageGet = function(items) {
+  setCheckedRadio('cup-size', items.cupsize);
+  setCheckedRadio('measurement-convert-to', items.measurementConvertTo);
+  setCheckedRadio('temperature-convert-to', items.temperatureConvertTo);
+};
+
+getCheckedRadio = function(radioName) {
+  var
+  radios = document.getElementsByName(radioName),
+  i, value;
+  for (i = 0; i < radios.length; i++) {
+    if (radios[i].checked) {
+      value = radios[i].value;
+      break;
     }
-  });
+  }
+  return value;
+};
+
+setCheckedRadio = function(radioName, value) {
+  var
+  radios = document.getElementsByName(radioName),
+  i;
+  for (i = 0; i < radios.length; i++) {
+    if (radios[i].value == value) {
+      radios[i].checked = true;
+      break;
+    }
+  }
 };
 
 document.addEventListener('DOMContentLoaded', restore_options);
