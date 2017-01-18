@@ -13,12 +13,13 @@ convertMlString, convertCelsString,
 getStoredData, replaceTextInNode, messageHandler,
 onSendMessage, onStorageGet,
 measurementConvertTo, temperatureConvertTo,
+fractionaliseCups,
 regExpCups, regExpFahr, regExpFahrCheap, regExpMlCheap,
 regExpMl, regExpCels, regExpCelsCheap;
 
 // build the pattern for the cups regular expression
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
-patternCups += "(?!\\b)?"; // word boundary (noncapturing optional group) TODO not understanding this properly!
+patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
 patternCups += "(\\d+(?:[/.]\\d+))?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
 patternCups += "\\s?"; // whitespace character (optional)
@@ -28,11 +29,10 @@ patternCups += "(&#188;|&#8531;|&#189;|&#8532;|&#190;)?"; // HTML decimal fracti
 patternCups += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;)?"; // HTML hexadecimal fractions (optional group)
 patternCups += "\\s?"; // optional whitespace character
 patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
+console.log(patternCups);
 
 // build the pattern for the fahrenheit regular expression
-// TODO fix false positive on eg. 71°C
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
-// patternFahr += "(?=^(?:(celsius|centigrade|c)))";
 patternFahr += "(?:"; // begin noncapturing group
 patternFahr += "(?:(?:°|degrees|deg|&#176;|&deg;)\\s?)"; // noncapturing degree group with/without whitespace
 patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false positives)
@@ -43,21 +43,14 @@ console.log(patternFahr);
 
 // build the pattern for the ml/litres regular expression
 // TODO change to match ml/litres
-patternMl += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
-patternMl += "(?!\\b)?"; // word boundary (noncapturing optional group)
-patternMl += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
-patternMl += "(\\d+(?:[/.]\\d+))?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
-patternMl += "\\s?"; // whitespace character (optional)
-patternMl += "(¼|⅓|½|⅔|¾)?"; // unicode fraction (optional group)
-patternMl += "(&frac14;|&frac12;|&frac34;)?"; // HTML entity fractions (optional group)
-patternMl += "(&#188;|&#8531;|&#189;|&#8532;|&#190;)?"; // HTML decimal fractions (optional group)
-patternMl += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;)?"; // HTML hexadecimal fractions (optional group)
+// patternMl += "(?!\\s?(?:m|l))"; // negative lookahead - whitespace (optional) and 'm' or 'l' can't be the next thing
+patternMl += "\\b"; // word boundary
+patternMl += "(\\d+(?:[/.]\\d+)?)"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
 patternMl += "\\s?"; // optional whitespace character
-patternMl += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
+patternMl += "(?:milliliters|millilitres|milliliter|millilitre|litres|liters|litre|liter|ml|mi|l)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
+console.log(patternMl);
 
 // build the pattern for the celsius regular expression
-// TODO change to match celsius/centigrade
-// TODO fix false positive on eg. 71°F
 patternCels += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternCels += "(?:"; // begin noncapturing group
 patternCels += "(?:(?:°|degrees|deg|&#176;|&deg;)\\s?)"; // noncapturing degree group with/without whitespace
@@ -143,37 +136,14 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
 // constants is called from within the scope of a regular expression
 // (so is a string replace callback).
 // TODO proper conversion from ml/litre to cups
-convertMlString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, hexFrac) {
+convertMlString = function(match, whole) {
   var
-  wholeNum = whole === undefined ? 0 : parseInt(whole, 10),
-  fraction = 0,
-  ml, str;
+  wholeNum = whole === undefined ? 0 : parseInt(whole, 10), // if lower than 10 presume this is litres and not ml
+  ml = (wholeNum < 10) ? wholeNum * 1000 : wholeNum,
+  cups, str;
 
-  if (longFrac) {
-    // eval is perfect for this job and I'm calling it safe in this context as
-    // input (longFrac) is taken from the DOM only and if the user is on a
-    // site where the DOM is compromised then it can run malicious JS already
-    /* jshint ignore:start */
-    fraction = eval(longFrac);
-    /* jshint ignore:end */
-  } else if (uniFrac === "¼" || entFrac === "&frac14" || decFrac === "&#188;" || hexFrac === "&#xBC;") {
-    fraction = 0.25;
-  } else if (uniFrac === "⅓" || decFrac === "&#8531;" || hexFrac === "&#x2153;") {
-    fraction = 0.3333;
-  } else if (uniFrac === "½" || entFrac === "&frac12" || decFrac === "&#189;" || hexFrac === "&#xBD;") {
-    fraction = 0.5;
-  } else if (uniFrac === "⅔" || decFrac === "&#8532;" || hexFrac === "&#x2154;") {
-    fraction = 0.6666;
-  } else if (uniFrac === "¾" || entFrac === "&frac34" || decFrac === "&#190;" || hexFrac === "&#xBE;") {
-    fraction = 0.75;
-  }
-
-  ml = Math.round((wholeNum + fraction) * cupsToMlMult);
-  if (ml > 1000) { // show big values as litres not ml
-    str = (Math.round((ml * ML_TO_LITRE_MULT) * LITRE_DEC_ROUNDING) / LITRE_DEC_ROUNDING) + "L";
-  } else {
-    str = ml + "ml";
-  }
+  cups = ml / cupsToMlMult;
+  str = fractionaliseCups(cups) + " cups";
 
   str = "<span class='fg-converted-cup'>" + str;
   str += "<span>" + match + "</span>";
@@ -201,6 +171,41 @@ convertCelsString = function(match, degrees) {
   str += "<span>" + match + "</span>";
   str += "</span>";
   return str;
+};
+
+fractionaliseCups = function(n) {
+  var
+  str = ("" + n),
+  ar = str.split("."),
+  whole = ar[0],
+  fraction;
+
+  console.log(n);
+
+  if (ar.length == 2) {
+    fraction = parseFloat("0." + ar[1], 10);
+    console.log("\tfraction: " + fraction);
+    if (fraction < 0.15) {
+      fraction = ""; // round down
+    } else if (fraction < 0.3) {
+      fraction = "&frac14"; // 1/4
+    } else if (fraction < 0.4) {
+      fraction = "&#8531;"; // 1/3
+    } else if (fraction < 0.6) {
+      fraction = "&frac12"; // 1/2
+    } else if (fraction < 0.7) {
+      fraction = "&#8532;"; // 2/3
+    } else if (fraction < 0.8) {
+      fraction = "&frac34"; // 3/4
+    } else if (fraction < 0.9) {
+      whole = parseInt(whole, 10) + 1; // round up
+      whole = "" + whole;
+    }
+  }
+
+  console.log("\twhole: " + whole);
+  console.log("\tfraction: " + fraction);
+  return whole + fraction;
 };
 
 // replaceTextInNode scans through a node replacing all cups with millilitres
