@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "ConvertCups",
-  "description": "This extension converts cup measurements to litres",
+  "description": "Converts recipe measurements, from cups to litres, Fahrenheit to Celsius and vice-versa.",
   "version": "0.1",
   "permissions": [
     "activeTab",
@@ -10,7 +10,7 @@
   ],
   "browser_action": {
     "default_icon": "icon.png",
-    "default_title": "Convert cups to litres"
+    "default_title": "Convert recipe"
   },
   "background":{
     "scripts":["background.js"]

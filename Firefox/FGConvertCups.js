@@ -6,6 +6,7 @@ TEMPERATURE_ROUNDING = 10, // 10 = round to nearest 10
 patternCups = "", patternFahr = "",
 patternMl = "", patternCels = "",
 constants = {},
+convertedOnce = false,
 
 cupsToMlMult,
 convertCupString, convertFahrString,
@@ -19,11 +20,12 @@ regExpMl, regExpCels, regExpCelsCheap;
 
 // build the pattern for the cups regular expression
 // TODO not capturing eg. '¼ cup' ("fraction first")
+// TODO some recipes use asterisk as degrees symbol
+// TODO some recipes use 1/10 of a cup! add it
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
-patternCups += "\\b"; // word boundary
+// patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
-patternCups += "(\\d+(?:[/.]\\d+))?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
-patternCups += "\\s?"; // whitespace character (optional)
+patternCups += "(\\d+(?:[/.]\\d+)\\s?)?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot, one or more digits and optional whitespace (optional group)
 patternCups += "(¼|⅓|½|⅔|¾)?"; // unicode fraction (optional group)
 patternCups += "(&frac14;|&frac12;|&frac34;)?"; // HTML entity fractions (optional group)
 patternCups += "(&#188;|&#8531;|&#189;|&#8532;|&#190;)?"; // HTML decimal fractions (optional group)
@@ -36,6 +38,7 @@ console.log(patternCups);
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternFahr += "(?:"; // begin noncapturing group
 patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
+// patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false positives)
 patternFahr += "|"; // OR seperator
 patternFahr += "(?:(?:farhenheit|fahrenheit|f\\b))"; // noncapturing fahrenheit group
@@ -43,17 +46,17 @@ patternFahr += ")+"; // require at least one of two previous groups
 console.log(patternFahr);
 
 // build the pattern for the ml/litres regular expression
-// patternMl += "(?!\\s?(?:m|l))"; // negative lookahead - whitespace (optional) and 'm' or 'l' can't be the next thing
 patternMl += "\\b"; // word boundary
 patternMl += "(\\d+(?:[/.]\\d+)?)"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
 patternMl += "\\s?"; // optional whitespace character
-patternMl += "(?:milliliters|millilitres|milliliter|millilitre|litres|liters|litre|liter|ml|mi|l)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
+patternMl += "(?:milliliters|millilitres|milliliter|millilitre|litres|liters|litre|liter|ml|l)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
 console.log(patternMl);
 
 // build the pattern for the celsius regular expression
 patternCels += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternCels += "(?:"; // begin noncapturing group
 patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
+// patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternCels += "(?!\\s?f)"; // not followed by f (rules out fahrenheit false positives)
 patternCels += "|"; // OR seperator
 patternCels += "(?:(?:celsius|centigrade|c\\b))"; // noncapturing fahrenheit group
@@ -87,8 +90,9 @@ onStorageGet = function(result){
   cupsToMlMult = parseInt(result.cupsize);
   measurementConvertTo = result.measurementConvertTo;
   temperatureConvertTo = result.temperatureConvertTo;
-  // TODO only allow conversion once per page load (otherwise get weird results)
-  replaceTextInNode(document.body);
+  // only allow conversion once per page load (otherwise get weird results)
+  if (!convertedOnce) { replaceTextInNode(document.body); }
+  convertedOnce = true;
 };
 
 
@@ -177,8 +181,6 @@ fractionaliseCups = function(n) {
   whole = ar[0],
   fraction;
 
-  console.log(n);
-
   if (ar.length == 2) {
     fraction = parseFloat("0." + ar[1], 10);
     console.log("\tfraction: " + fraction);
@@ -200,8 +202,6 @@ fractionaliseCups = function(n) {
     }
   }
 
-  console.log("\twhole: " + whole);
-  console.log("\tfraction: " + fraction);
   return whole + fraction;
 };
 

@@ -21,6 +21,7 @@ span.fg-converted-cup:hover span { display: inline; }
 
 /* options page */
 body.fg-convertcups-options { padding: 0.5em 0.5em 4.5em 0.5em; position: relative; }
+body.fg-convertcups-options>div { display: inline-block; width: 37em; }
 body.fg-convertcups-options h2 { font-size: 1.33em; margin-top: 1.5em; margin-bottom: 1em; }
 body.fg-convertcups-options h2:first-child { margin-top: 1em; }
 body.fg-convertcups-options #status {
@@ -38,7 +39,7 @@ body.fg-convertcups-options .fg-cup-size-option label input {
 }
 
 body.fg-convertcups-options .radio {
-  display: inline-block;
+  display: inline-block; width: 18em;
 }
 body.fg-convertcups-options .radio input[type='radio'],
 body.fg-convertcups-options .radio label {
@@ -49,12 +50,12 @@ body.fg-convertcups-options .radio input[type='radio'] {
   margin-left: 2em; margin-right: 0.5em;
 }
 body.fg-convertcups-options .radio label {
-  width: 9em;
+  width: 13em;
 }
 
 body.fg-convertcups-options .radio:first-child input[type='radio']:after,
 body.fg-convertcups-options .radio:first-child input[type='radio']:checked:after {
-  margin-left: 2.7em;
+  margin-left: 4em;
   position: relative; top: -0.4em;
   font-weight: bold; font-size: 3em;
   color: pink;
@@ -65,6 +66,12 @@ body.fg-convertcups-options .radio:first-child input[type='radio']:after {
 }
 body.fg-convertcups-options .radio:first-child input[type='radio']:checked:after {
   content: "\2190";
+}
+body.fg-convertcups-options .radio input[type='radio']+label:before {
+  content: "from "; /*display: inline-block; width: 3em; text-align: right; padding-right: 0.5em;*/
+}
+body.fg-convertcups-options .radio input[type='radio']:checked+label:before {
+  content: "to ";
 }
 
 body.fg-convertcups-options #save {
