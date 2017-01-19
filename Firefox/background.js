@@ -34,21 +34,21 @@ executionComplete = function() {
 
 onStorageUpdateTitle = function(result){
   var
-  title = "Press to convert:\n\n",
+  title = "ConvertCups - press to convert:\n\n",
   separator = " - ";
 
   if (result.measurementConvertTo === "ML") {
-    title += separator + "cups to ml/litres\n";
+    title += separator + "cups --> ml/litres";
   } else {
-    title += separator + "ml/litres to cups\n";
+    title += separator + "ml/litres --> cups";
   }
+  title += " (" + result.cupsize + "ml cup size)\n";
   if (result.temperatureConvertTo === "F") {
-    title += separator + "Celsius to Fahrenheit\n";
+    title += separator + "Celsius --> Fahrenheit\n";
   } else {
-    title += separator + "Fahrenheit to Celsius\n";
+    title += separator + "Fahrenheit --> Celsius\n";
   }
-  title += separator + "using " + result.cupsize + "ml cup size";
-  title += "\n\n(change this in the extension options)";
+  title += "\n\nChange these settings in the extension options";
   chrome.browserAction.setTitle({ title: title });
 };
 

@@ -13,7 +13,8 @@
     "default_title": "Convert recipe"
   },
   "background":{
-    "scripts":["background.js"]
+    "scripts":["background.js"],
+    "persistent": false
   },
   "options_page": "fg-convertcups-options.htm",
   "options_ui": {
