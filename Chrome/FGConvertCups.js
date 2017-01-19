@@ -19,8 +19,6 @@ regExpMl, regExpCels, regExpCelsCheap;
 
 
 // build the pattern for the cups regular expression
-// TODO some recipes use asterisk as degrees symbol
-// TODO some recipes use 1/10 of a cup! add it
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
 // patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
@@ -34,9 +32,10 @@ patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups
 // console.log(patternCups);
 
 // build the pattern for the fahrenheit regular expression
+// (some recipes use asterisk as degrees symbol)
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternFahr += "(?:"; // begin noncapturing group
-patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
+patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;|\\*)\\s?)"; // noncapturing degree group with/without whitespace
 // patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false positives)
 patternFahr += "|"; // OR seperator
@@ -55,7 +54,7 @@ patternMl += "(?:\\b)"; // not followed by b (fixes getting caught out by eg. 8l
 // build the pattern for the celsius regular expression
 patternCels += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternCels += "(?:"; // begin noncapturing group
-patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
+patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;|\\*)\\s?)"; // noncapturing degree group with/without whitespace
 // patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternCels += "(?!\\s?f)"; // not followed by f (rules out fahrenheit false positives)
 patternCels += "|"; // OR seperator

@@ -14,6 +14,8 @@ save_options = function() {
     temperatureConvertTo: getCheckedRadio('temperature-convert-to')
   }, onStorageSet);
 
+  backgroundPage.updateTitle();
+
   // tell all converted tabs about change option change
   convertedTabID_ar = backgroundPage.convertedTabID_ar;
   for (i = 0; i < convertedTabID_ar.length; i++) {
