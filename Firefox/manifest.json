@@ -1,5 +1,6 @@
 {
   "manifest_version": 2,
+
   "name": "ConvertCups",
   "description": "This extension converts cup measurements to litres",
   "version": "0.1",

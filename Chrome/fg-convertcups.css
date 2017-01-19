@@ -20,17 +20,55 @@ span.fg-converted-cup span {
 span.fg-converted-cup:hover span { display: inline; }
 
 /* options page */
-body.fg-convertcups-options { padding: 0.5em; }
-body.fg-convertcups-options h2 { font-size: 1.33em; margin-bottom: 1em; }
+body.fg-convertcups-options { padding: 0.5em 0.5em 4.5em 0.5em; position: relative; }
+body.fg-convertcups-options h2 { font-size: 1.33em; margin-top: 1.5em; margin-bottom: 1em; }
+body.fg-convertcups-options h2:first-child { margin-top: 1em; }
 body.fg-convertcups-options #status {
-  position: absolute; bottom: 0; right: 0.5em;
-  /*min-height: 4em; */margin: 0.5em 0;
-  font-weight: bold; color: crimson;
+  position: absolute; bottom: 1.25em; right: 6em;
+  text-align: right;
+  font-weight: bold; font-size: 1.15em; color: crimson;
 }
 body.fg-convertcups-options #status span { color: crimson; display: block; margin-top: 0.5em; }
-body.fg-convertcups-options label {
-  display: inline-block; position: relative; margin-bottom: 0.5em;
+
+body.fg-convertcups-options .fg-cup-size-option label {
+  display: inline-block; margin-left: 2em; margin-bottom: 0.5em;
 }
-body.fg-convertcups-options input {
-  display: inline-block; position: relative; margin-right: 0.5em;
+body.fg-convertcups-options .fg-cup-size-option label input {
+  display: inline-block; margin-right: 1em; margin-bottom: 0.1em;
+}
+
+body.fg-convertcups-options .radio {
+  display: inline-block;
+}
+body.fg-convertcups-options .radio input[type='radio'],
+body.fg-convertcups-options .radio label {
+  display: inline-block; position: relative;
+  margin-bottom: 0.1em;
+}
+body.fg-convertcups-options .radio input[type='radio'] {
+  margin-left: 2em; margin-right: 0.5em;
+}
+body.fg-convertcups-options .radio label {
+  width: 9em;
+}
+
+body.fg-convertcups-options .radio:first-child input[type='radio']:after,
+body.fg-convertcups-options .radio:first-child input[type='radio']:checked:after {
+  margin-left: 2.7em;
+  position: relative; top: -0.4em;
+  font-weight: bold; font-size: 3em;
+  color: pink;
+  white-space: nowrap;
+}
+body.fg-convertcups-options .radio:first-child input[type='radio']:after {
+  content: "\2192";
+}
+body.fg-convertcups-options .radio:first-child input[type='radio']:checked:after {
+  content: "\2190";
+}
+
+body.fg-convertcups-options #save {
+  position: absolute;
+  right: 0;
+  margin-top: 1em; font-size: 1.15em;
 }

@@ -1,7 +1,12 @@
 
 var
+constants = {
+  DEFAULT_CUPSIZE: 240,
+  DEFAULT_MEASUREMENT_CONVERT_TO: 'ML',
+  DEFAULT_TEMPERATURE_CONVERT_TO: 'C'
+},
 convertedTabID_ar = [],
-onClick, executionComplete;
+onClick, onMessage, executionComplete;
 
 onClick = function(tab) {
   chrome.tabs.insertCSS(tab.id, {
@@ -15,8 +20,16 @@ onClick = function(tab) {
   convertedTabID_ar.push(tab.id);
 };
 
+onMessage = function(request, sender, sendResponse) {
+  if (request.message === "requestConstants") {
+    sendResponse({constants: constants});
+  }
+};
+
 executionComplete = function() {
   console.log("ConvertCups: Script Finished Executing .. ");
 };
 
+
 chrome.browserAction.onClicked.addListener(onClick);
+chrome.runtime.onMessage.addListener(onMessage);

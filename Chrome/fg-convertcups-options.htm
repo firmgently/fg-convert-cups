@@ -6,22 +6,34 @@
 </head>
 
 <body class="fg-convertcups-options">
-  <div>
-    <h2>Cup size to be used:</h2>
+  <h2>Cup size</h2>
+  <div class="fg-cup-size-option">
     <label><input type="radio" name="cup-size" value="240">United States (240ml) <em>standard</em></label><br>
     <label><input type="radio" name="cup-size" value="250">Metric (250ml)</label><br>
     <label><input type="radio" name="cup-size" value="227">Canadian (227ml)</label><br>
     <label><input type="radio" name="cup-size" value="200">Japanese (200ml)</label><br>
   </div>
+  <h2>Convert to</h2>
   <div>
-    <h2>Measurements convert to:</h2>
-    <label><input type="radio" name="measurement-convert-to" value="CUPS">Cups</label>
-    <label><input type="radio" name="measurement-convert-to" value="ML">Millilitres/Litres</label>
+    <div class="radio">
+      <input type="radio" name="measurement-convert-to" value="CUPS" id="con-dir-cups">
+      <label class="fg-convert-direction" for="con-dir-cups">Cups</label>
+    </div>
+    <div class="radio">
+      <input type="radio" name="measurement-convert-to" value="ML" id="con-dir-ml">
+      <label class="fg-convert-direction" for="con-dir-ml">Millilitres/Litres</label>
+    </div>
   </div>
+  <!-- <h2>Temperature convert to:</h2> -->
   <div>
-    <h2>Temperature convert to:</h2>
-    <label><input type="radio" name="temperature-convert-to" value="F">Fahrenheit</label>
-    <label><input type="radio" name="temperature-convert-to" value="C">Celsius</label>
+    <div class="radio">
+      <input type="radio" name="temperature-convert-to" value="C" id="con-dir-c">
+      <label class="fg-convert-direction" for="con-dir-c">Celsius</label>
+    </div>
+    <div class="radio">
+      <input type="radio" name="temperature-convert-to" value="F" id="con-dir-f">
+      <label class="fg-convert-direction" for="con-dir-f">Fahrenheit</label>
+    </div>
   </div>
 
   <div id="status"></div>

@@ -35,10 +35,10 @@ restore_options = function() {
 onStorageSet = function() {
   // Update status to let user know options were saved.
   var status = document.getElementById('status');
-  status.innerHTML = 'Options saved';
+  status.innerHTML = 'OPTIONS SAVED';
   setTimeout(function() {
     status.textContent = '';
-  }, 7000);
+  }, 4000);
 };
 
 onStorageGet = function(items) {

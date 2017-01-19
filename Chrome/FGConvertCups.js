@@ -18,6 +18,8 @@ regExpCups, regExpFahr, regExpFahrCheap, regExpMlCheap,
 regExpMl, regExpCels, regExpCelsCheap;
 
 // build the pattern for the cups regular expression
+// TODO not capturing eg. '¼ cup' ("fraction first")
+// TODO some recipes use asterisk as degrees symbol
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
 patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
@@ -34,7 +36,7 @@ console.log(patternCups);
 // build the pattern for the fahrenheit regular expression
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternFahr += "(?:"; // begin noncapturing group
-patternFahr += "(?:(?:°|degrees|deg|&#176;|&deg;)\\s?)"; // noncapturing degree group with/without whitespace
+patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false positives)
 patternFahr += "|"; // OR seperator
 patternFahr += "(?:(?:farhenheit|fahrenheit|f\\b))"; // noncapturing fahrenheit group
@@ -42,7 +44,6 @@ patternFahr += ")+"; // require at least one of two previous groups
 console.log(patternFahr);
 
 // build the pattern for the ml/litres regular expression
-// TODO change to match ml/litres
 // patternMl += "(?!\\s?(?:m|l))"; // negative lookahead - whitespace (optional) and 'm' or 'l' can't be the next thing
 patternMl += "\\b"; // word boundary
 patternMl += "(\\d+(?:[/.]\\d+)?)"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
@@ -53,7 +54,7 @@ console.log(patternMl);
 // build the pattern for the celsius regular expression
 patternCels += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternCels += "(?:"; // begin noncapturing group
-patternCels += "(?:(?:°|degrees|deg|&#176;|&deg;)\\s?)"; // noncapturing degree group with/without whitespace
+patternCels += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternCels += "(?!\\s?f)"; // not followed by f (rules out fahrenheit false positives)
 patternCels += "|"; // OR seperator
 patternCels += "(?:(?:celsius|centigrade|c\\b))"; // noncapturing fahrenheit group
@@ -135,7 +136,6 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
 
 // constants is called from within the scope of a regular expression
 // (so is a string replace callback).
-// TODO proper conversion from ml/litre to cups
 convertMlString = function(match, whole) {
   var
   wholeNum = whole === undefined ? 0 : parseInt(whole, 10), // if lower than 10 presume this is litres and not ml
@@ -153,7 +153,6 @@ convertMlString = function(match, whole) {
 
 convertFahrString = function(match, degrees) {
   var celsius, str;
-  // TODO make sure temperature is within  sensible range for oven
   celsius = Math.round(((degrees-32) * (5/9)) / TEMPERATURE_ROUNDING) * TEMPERATURE_ROUNDING;
   str = celsius + "&deg;C";
   str = "<span class='fg-converted-cup'>" + str;
@@ -164,7 +163,6 @@ convertFahrString = function(match, degrees) {
 
 convertCelsString = function(match, degrees) {
   var fahrenheit, str;
-  // TODO make sure temperature is within  sensible range for oven
   fahrenheit = Math.round(((degrees * (9/5)) + 32) / TEMPERATURE_ROUNDING) * TEMPERATURE_ROUNDING;
   str = fahrenheit + "&deg;F";
   str = "<span class='fg-converted-cup'>" + str;

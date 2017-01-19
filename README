@@ -2,17 +2,28 @@
 
 Browser extension for Chrome/Firefox/Opera/Safari??
 
-Converts cup measurements on recipe websites to make them easier to follow for people who are used to litres/millilitres.
+Converts between cups and ml/litres making online recipes easier to follow.
 
-Also converts oven temperatures between Fahrenheit and Celsius.
+Converts oven temperatures between Fahrenheit and Celsius.
 
-Just click the pink cup icon to convert units in the current tab.
+Click the pink cup icon to convert the current web page.
 
-Options to change cup measurement from US/Canada/Japan/metric.
 
-Focuses more on simplicity than accuracy, may sometimes be out by 5-10ml. The reasoning was to keep it simple, not have awkward numbers and that if you're using cups to measure with you probably aren't aiming for precision :)
+### Options
+
+  + change cup measurement from US/Canada/Japan/metric
+  + choose what you want to convert TO (eg. ml/Celsius)
+
+
+### Overview
+
+  + Focuses more on simplicity than accuracy, keeping to round numbers like 200C rather than 203C (may sometimes be out by a few degrees or ml but should be fine for cooks to use - if you're using cups to measure with you probably aren't aiming for precision :) )
+
+  + Converted pages can be printed out.
+
+  + Cups measure by volume rather than weight. This addon doesn't change that.
 
 
 ## TO DO
 
-Currently only converts in one direction (cups to L/ml, Fahrenheit to Celsius), needs to work in the other direction so eg. US users can convert GB recipes.
+
