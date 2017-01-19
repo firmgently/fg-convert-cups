@@ -10,6 +10,7 @@ updateTitle,
 onClick, onMessage, onStorageUpdateTitle, executionComplete;
 
 onClick = function(tab) {
+  // console.log("tab.id: " + tab.id);
   chrome.tabs.insertCSS(tab.id, {
     "file": "fg-convertcups.css"
   });

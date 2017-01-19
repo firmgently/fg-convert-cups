@@ -6,7 +6,6 @@ TEMPERATURE_ROUNDING = 10, // 10 = round to nearest 10
 patternCups = "", patternFahr = "",
 patternMl = "", patternCels = "",
 constants = {},
-convertedOnce = false,
 
 cupsToMlMult,
 convertCupString, convertFahrString,
@@ -17,6 +16,7 @@ measurementConvertTo, temperatureConvertTo,
 fractionaliseCups,
 regExpCups, regExpFahr, regExpFahrCheap, regExpMlCheap,
 regExpMl, regExpCels, regExpCelsCheap;
+
 
 // build the pattern for the cups regular expression
 // TODO some recipes use asterisk as degrees symbol
@@ -31,7 +31,7 @@ patternCups += "(&#188;|&#8531;|&#189;|&#8532;|&#190;|&#8530;)?"; // HTML decima
 patternCups += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;|&#x2152;)?"; // HTML hexadecimal fractions (optional group)
 patternCups += "\\s?"; // optional whitespace character
 patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
-console.log(patternCups);
+// console.log(patternCups);
 
 // build the pattern for the fahrenheit regular expression
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
@@ -42,7 +42,7 @@ patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false pos
 patternFahr += "|"; // OR seperator
 patternFahr += "(?:(?:farhenheit|fahrenheit|f\\b))"; // noncapturing fahrenheit group
 patternFahr += ")+"; // require at least one of two previous groups
-console.log(patternFahr);
+// console.log(patternFahr);
 
 // build the pattern for the ml/litres regular expression
 patternMl += "\\b"; // word boundary
@@ -50,7 +50,7 @@ patternMl += "(\\d+(?:[/.]\\d+)?)"; // one or more digits, optionally followed b
 patternMl += "\\s?"; // optional whitespace character
 patternMl += "(?:milliliters|millilitres|milliliter|millilitre|litres|liters|litre|liter|ml|l)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
 patternMl += "(?:\\b)"; // not followed by b (fixes getting caught out by eg. 8lb)
-console.log(patternMl);
+// console.log(patternMl);
 
 // build the pattern for the celsius regular expression
 patternCels += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
@@ -72,7 +72,7 @@ regExpMlCheap = new RegExp(/\d+(.+)?(millilitres|litres|ml|l|)+/, 'ig');
 
 onSendMessage = function(response) {
   var prop;
-  if (response.constants) {
+  if (response && response.constants) {
     for (prop in response.constants) { constants[prop] = response.constants; }
     getStoredData();
   }
@@ -87,13 +87,18 @@ getStoredData = function() {
 };
 
 onStorageGet = function(result){
-  cupsToMlMult = parseInt(result.cupsize);
-  measurementConvertTo = result.measurementConvertTo;
-  temperatureConvertTo = result.temperatureConvertTo;
-  // only allow conversion once per page load (otherwise get weird results)
-  if (!convertedOnce) {
+  // window.fgConvertCupsHasRunOnce must be declared globally
+  // (on the window object) for persistance. Don't allow the
+  // conversion/replacement to run more than once on the same
+  // DOM as multiple find/replaces can corrupt content
+  if (window.fgConvertCupsHasRunOnce === undefined) {
+    cupsToMlMult = parseInt(result.cupsize);
+    measurementConvertTo = result.measurementConvertTo;
+    temperatureConvertTo = result.temperatureConvertTo;
     replaceTextInNode(document.body);
-    convertedOnce = true;
+    window.fgConvertCupsHasRunOnce = true;
+  } else {
+    console.log("Page already converted");
   }
 };
 
@@ -273,6 +278,3 @@ chrome.runtime.onMessage.addListener(messageHandler);
 
 // start setup by requesting app constants
 chrome.runtime.sendMessage({message: 'requestConstants'}, onSendMessage);
-
-// TODO change icon hover text to explain:
-// options | conversion already done 'refresh if necessary'
