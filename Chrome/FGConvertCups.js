@@ -25,10 +25,10 @@ patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 
 // patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
 patternCups += "(\\d+(?:[/.]\\d+)\\s?)?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot, one or more digits and optional whitespace (optional group)
-patternCups += "(¼|⅓|½|⅔|¾)?"; // unicode fraction (optional group)
+patternCups += "(¼|⅓|½|⅔|¾|⅒)?"; // unicode fraction (optional group)
 patternCups += "(&frac14;|&frac12;|&frac34;)?"; // HTML entity fractions (optional group)
-patternCups += "(&#188;|&#8531;|&#189;|&#8532;|&#190;)?"; // HTML decimal fractions (optional group)
-patternCups += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;)?"; // HTML hexadecimal fractions (optional group)
+patternCups += "(&#188;|&#8531;|&#189;|&#8532;|&#190;|&#8530;)?"; // HTML decimal fractions (optional group)
+patternCups += "(&#xBC;|&#x2153;|&#xBD;|&#x2154;|&#xBE;|&#x2152;)?"; // HTML hexadecimal fractions (optional group)
 patternCups += "\\s?"; // optional whitespace character
 patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
 console.log(patternCups);
@@ -49,7 +49,7 @@ patternMl += "\\b"; // word boundary
 patternMl += "(\\d+(?:[/.]\\d+)?)"; // one or more digits, optionally followed by a noncapturing group of a slash or dot and one or more digits (optional group)
 patternMl += "\\s?"; // optional whitespace character
 patternMl += "(?:milliliters|millilitres|milliliter|millilitre|litres|liters|litre|liter|ml|l)"; // longest string first eg. cups|cup not cup|cups (noncapturing compulsory group)
-patternMl += "(?!b)"; // not followed by b (fixes getting caught out by eg. 8lb)
+patternMl += "(?:\\b)"; // not followed by b (fixes getting caught out by eg. 8lb)
 console.log(patternMl);
 
 // build the pattern for the celsius regular expression
@@ -124,10 +124,12 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
     fraction = 0.6666;
   } else if (uniFrac === "¾" || entFrac === "&frac34" || decFrac === "&#190;" || hexFrac === "&#xBE;") {
     fraction = 0.75;
+  } else if (uniFrac === "⅒" || decFrac === "&#8530;" || hexFrac === "&#x2152;") {
+    fraction = 0.1;
   }
 
   ml = Math.round((wholeNum + fraction) * cupsToMlMult);
-  if (ml > 1000) { // show big values as litres not ml
+  if (ml >= 1000) { // show big values as litres not ml
     str = (Math.round((ml * ML_TO_LITRE_MULT) * LITRE_DEC_ROUNDING) / LITRE_DEC_ROUNDING) + "L";
   } else {
     str = ml + "ml";
@@ -143,12 +145,18 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
 // (so is a string replace callback).
 convertMlString = function(match, whole) {
   var
-  wholeNum = whole === undefined ? 0 : parseInt(whole, 10), // if lower than 10 presume this is litres and not ml
-  ml = (wholeNum < 10) ? wholeNum * 1000 : wholeNum,
-  cups, str;
+  wholeNum = whole === undefined ? 0 : parseInt(whole, 10),
+  ml = (wholeNum < 5) ? wholeNum * 1000 : wholeNum, // if lower than 5 presume this is litres and not ml
+  cups, str, fractionalised_ob;
 
   cups = ml / cupsToMlMult;
-  str = fractionaliseCups(cups) + " cups";
+
+  fractionalised_ob = fractionaliseCups(cups);
+  if (fractionalised_ob.singular) {
+    str = fractionalised_ob.cups + " cup";
+  } else {
+    str = fractionalised_ob.cups + " cups";
+  }
 
   str = "<span class='fg-converted-cup'>" + str;
   str += "<span>" + match + "</span>";
@@ -180,14 +188,21 @@ fractionaliseCups = function(n) {
   var
   str = ("" + n),
   ar = str.split("."),
-  whole = ar[0],
-  fraction = "";
+  whole = parseInt(ar[0], 10),
+  fraction = "",
+  singular = false;
 
   if (ar.length == 2) {
     fraction = parseFloat("0." + ar[1], 10);
     console.log("\tfraction: " + fraction);
-    if (fraction < 0.15) {
-      fraction = ""; // round down
+    if (fraction < 0.3) {
+      if (whole === 0) {
+        fraction = "&#8530;"; // 1/10 (to avoid rounding positive value down to total zero)
+      } else {
+        fraction = ""; // round down
+      }
+    } else if (fraction < 0.13) {
+      fraction = "&#8530;"; // 1/10
     } else if (fraction < 0.3) {
       fraction = "&frac14"; // 1/4
     } else if (fraction < 0.4) {
@@ -199,12 +214,15 @@ fractionaliseCups = function(n) {
     } else if (fraction < 0.8) {
       fraction = "&frac34"; // 3/4
     } else if (fraction < 0.9) {
-      whole = parseInt(whole, 10) + 1; // round up
+      whole += 1; // round up
       whole = "" + whole;
     }
   }
 
-  return whole + fraction;
+  if (whole === 0 || (whole === 1 && fraction === "")) { singular = true; }
+  if (whole === 0) { whole = ""; } // convert zero to empty string
+
+  return { cups: whole + fraction, singular: singular};
 };
 
 // replaceTextInNode scans through a node replacing all cups with millilitres
@@ -255,3 +273,6 @@ chrome.runtime.onMessage.addListener(messageHandler);
 
 // start setup by requesting app constants
 chrome.runtime.sendMessage({message: 'requestConstants'}, onSendMessage);
+
+// TODO change icon hover text to explain:
+// options | conversion already done 'refresh if necessary'

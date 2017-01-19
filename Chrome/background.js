@@ -6,7 +6,8 @@ constants = {
   DEFAULT_TEMPERATURE_CONVERT_TO: 'C'
 },
 convertedTabID_ar = [],
-onClick, onMessage, executionComplete;
+updateTitle,
+onClick, onMessage, onStorageUpdateTitle, executionComplete;
 
 onClick = function(tab) {
   chrome.tabs.insertCSS(tab.id, {
@@ -30,6 +31,35 @@ executionComplete = function() {
   console.log("ConvertCups: Script Finished Executing .. ");
 };
 
+onStorageUpdateTitle = function(result){
+  var
+  title = "Press to convert:\n\n",
+  separator = " - ";
+
+  if (result.measurementConvertTo === "ML") {
+    title += separator + "cups to ml/litres\n";
+  } else {
+    title += separator + "ml/litres to cups\n";
+  }
+  if (result.temperatureConvertTo === "F") {
+    title += separator + "Celsius to Fahrenheit\n";
+  } else {
+    title += separator + "Fahrenheit to Celsius\n";
+  }
+  title += separator + "using " + result.cupsize + "ml cup size";
+  title += "\n\n(change this in the extension options)";
+  chrome.browserAction.setTitle({ title: title });
+};
+
+updateTitle = function() {
+  chrome.storage.local.get({
+    cupsize: constants.DEFAULT_CUPSIZE,
+    measurementConvertTo: constants.DEFAULT_MEASUREMENT_CONVERT_TO,
+    temperatureConvertTo: constants.DEFAULT_TEMPERATURE_CONVERT_TO
+  }, onStorageUpdateTitle);
+};
 
 chrome.browserAction.onClicked.addListener(onClick);
 chrome.runtime.onMessage.addListener(onMessage);
+
+updateTitle();
