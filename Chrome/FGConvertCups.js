@@ -199,9 +199,9 @@ fractionaliseCups = function(n) {
   if (ar.length == 2) {
     fraction = parseFloat("0." + ar[1], 10);
     console.log("\tfraction: " + fraction);
-    if (fraction < 0.3) {
+    if (fraction < 0.07) {
       if (whole === 0) {
-        fraction = "&#8530;"; // 1/10 (to avoid rounding positive value down to total zero)
+        fraction = "&#8530;"; // 1/10 (to avoid rounding a positive volume down to total zero)
       } else {
         fraction = ""; // round down
       }
@@ -220,6 +220,7 @@ fractionaliseCups = function(n) {
     } else if (fraction < 0.9) {
       whole += 1; // round up
       whole = "" + whole;
+      fraction = "";
     }
   }
 

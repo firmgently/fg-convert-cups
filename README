@@ -1,6 +1,6 @@
 ### Convert Cups
 
-Browser extension for Chrome/Firefox/Opera/Safari??
+Browser extension for Chrome/Firefox/Opera
 
 Click the pink cup icon to convert the current web page.
 
@@ -13,7 +13,7 @@ Hover over converted measurements (highlighted in pink) to see the original text
 
 ### Options
 
-  + change cup measurement from US/Canada/Japan/metric
+  + change cup measurement for US/Canada/Japan/metric
   + choose what you want to convert (eg. ml --> cups or cups --> ml)
 
 
