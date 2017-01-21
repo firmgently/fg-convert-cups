@@ -10,6 +10,7 @@ constants = {},
 cupsToMlMult,
 convertCupString, convertFahrString,
 convertMlString, convertCelsString,
+convertStringFraction,
 getStoredData, replaceTextInNode, messageHandler,
 onSendMessage, onStorageGet,
 measurementConvertTo, temperatureConvertTo,
@@ -20,7 +21,6 @@ regExpMl, regExpCels, regExpCelsCheap;
 
 // build the pattern for the cups regular expression
 patternCups += "(?!\\s?cup)"; // negative lookahead - whitespace (optional) and 'cup' can't be the next thing (prevents match on eg. 'beefcup'/'cups')
-// patternCups += "\\b"; // word boundary
 patternCups += "(\\d+\\s?)?"; // one or more digits, optionally followed by whitespace (optional group)
 patternCups += "(\\d+(?:[/.]\\d+)\\s?)?"; // one or more digits, optionally followed by a noncapturing group of a slash or dot, one or more digits and optional whitespace (optional group)
 patternCups += "(¼|⅓|½|⅔|¾|⅒)?"; // unicode fraction (optional group)
@@ -36,7 +36,6 @@ patternCups += "(?:cups|cup)"; // longest string first eg. cups|cup not cup|cups
 patternFahr += "(\\d+(?:.\\d+)?)+\\s?"; // at least 1 digit with or without decimal point and/or whitespace
 patternFahr += "(?:"; // begin noncapturing group
 patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;|\\*)\\s?)"; // noncapturing degree group with/without whitespace
-// patternFahr += "(?:(?:°|degrees|deg|&#186;|&#176;|&deg;|º|&ordm;|&#xba;)\\s?)"; // noncapturing degree group with/without whitespace
 patternFahr += "(?!\\s?c)"; // not followed by c (rules out centigrade false positives)
 patternFahr += "|"; // OR seperator
 patternFahr += "(?:(?:farhenheit|fahrenheit|f\\b))"; // noncapturing fahrenheit group
@@ -96,9 +95,9 @@ onStorageGet = function(result){
     temperatureConvertTo = result.temperatureConvertTo;
     replaceTextInNode(document.body);
     window.fgConvertCupsHasRunOnce = true;
-  } else {
+  } /*else {
     console.log("Page already converted");
-  }
+  }*/
 };
 
 
@@ -112,12 +111,7 @@ convertCupString = function(match, whole, longFrac, uniFrac, entFrac, decFrac, h
   ml, str;
 
   if (longFrac) {
-    // eval is perfect for this job and I'm calling it safe in this context as
-    // input (longFrac) is taken from the DOM only and if the user is on a
-    // site where the DOM is compromised then it can run malicious JS already
-    /* jshint ignore:start */
-    fraction = eval(longFrac);
-    /* jshint ignore:end */
+    fraction = convertStringFraction(longFrac);
   } else if (uniFrac === "¼" || entFrac === "&frac14" || decFrac === "&#188;" || hexFrac === "&#xBC;") {
     fraction = 0.25;
   } else if (uniFrac === "⅓" || decFrac === "&#8531;" || hexFrac === "&#x2153;") {
@@ -188,6 +182,16 @@ convertCelsString = function(match, degrees) {
   return str;
 };
 
+convertStringFraction = function(str) {
+  var ar = str.split("/"), ret;
+  if (ar[1] !== 0) {
+    ret = ar[0]/ar[1];
+  } else {
+    ret = 0;
+  }
+  return ret;
+};
+
 fractionaliseCups = function(n) {
   var
   str = ("" + n),
@@ -198,10 +202,10 @@ fractionaliseCups = function(n) {
 
   if (ar.length == 2) {
     fraction = parseFloat("0." + ar[1], 10);
-    console.log("\tfraction: " + fraction);
-    if (fraction < 0.3) {
+    // console.log("\tfraction: " + fraction);
+    if (fraction < 0.07) {
       if (whole === 0) {
-        fraction = "&#8530;"; // 1/10 (to avoid rounding positive value down to total zero)
+        fraction = "&#8530;"; // 1/10 (to avoid rounding a positive volume down to total zero)
       } else {
         fraction = ""; // round down
       }
@@ -220,6 +224,7 @@ fractionaliseCups = function(n) {
     } else if (fraction < 0.9) {
       whole += 1; // round up
       whole = "" + whole;
+      fraction = "";
     }
   }
 

@@ -7,16 +7,15 @@ constants = {
 },
 convertedTabID_ar = [],
 updateTitle,
-onClick, onMessage, onStorageUpdateTitle, executionComplete;
+onClick, onMessage, onStorageUpdateTitle;
 
 onClick = function(tab) {
-  // console.log("tab.id: " + tab.id);
   chrome.tabs.insertCSS(tab.id, {
     "file": "fg-convertcups.css"
   });
   chrome.tabs.executeScript(tab.id, {
     "file": "FGConvertCups.js"
-  }, executionComplete);
+  });
   // every time the extension is run, save the tab ID to convertedTabID_ar
   // to be used eg. when cup size option is changed we can refresh all affected tabs
   convertedTabID_ar.push(tab.id);
@@ -26,10 +25,6 @@ onMessage = function(request, sender, sendResponse) {
   if (request.message === "requestConstants") {
     sendResponse({constants: constants});
   }
-};
-
-executionComplete = function() {
-  console.log("ConvertCups: Script Finished Executing .. ");
 };
 
 onStorageUpdateTitle = function(result){
@@ -53,6 +48,7 @@ onStorageUpdateTitle = function(result){
 };
 
 updateTitle = function() {
+  // console.log("constants.DEFAULT_CUPSIZE: " + constants.DEFAULT_CUPSIZE);
   chrome.storage.local.get({
     cupsize: constants.DEFAULT_CUPSIZE,
     measurementConvertTo: constants.DEFAULT_MEASUREMENT_CONVERT_TO,
