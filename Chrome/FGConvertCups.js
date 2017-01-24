@@ -14,7 +14,6 @@ uk.co = (uk.co !== undefined) ? uk.co : {};
 uk.co.firmgently = (uk.co.firmgently !== undefined) ? uk.co.firmgently : {};
 
 if ("undefined" === typeof(FGConvertCups)) {var FGConvertCups = {};}
-
 uk.co.firmgently.FGConvertCups = (function() {
   var
   ML_TO_LITRE_MULT = 0.001,
@@ -25,12 +24,12 @@ uk.co.firmgently.FGConvertCups = (function() {
   patternMl = "", patternCels = "",
   constants = {},
 
-  cupsToMlMult,
+  logMsg, cupsToMlMult,
   convertCupString, convertFahrString,
   convertMlString, convertCelsString,
   convertStringFraction,
   getStoredData, replaceTextInNode, messageHandler,
-  onSendMessage, onStorageGet,
+  onSendMessage, onStorageGet, wrapMatchedText,
   measurementConvertTo, temperatureConvertTo,
   fractionaliseCups,
   regExpCups, regExpFahr, regExpFahrCheap, regExpMlCheap,
@@ -82,6 +81,7 @@ uk.co.firmgently.FGConvertCups = (function() {
   regExpCelsCheap = new RegExp(/\d+(.+)?(c|d|°|&#176;|&deg;)+/, 'ig');
   regExpMlCheap = new RegExp(/\d+(.+)?(millilitres|litres|ml|l|)+/, 'ig');
 
+
   onSendMessage = function(response) {
     var prop;
     if (response && response.constants) {
@@ -108,12 +108,23 @@ uk.co.firmgently.FGConvertCups = (function() {
       measurementConvertTo = result.measurementConvertTo;
       temperatureConvertTo = result.temperatureConvertTo;
       replaceTextInNode(document.body);
+      if (result.DEBUG_MODE) {
+        logMsg = function(msg) { console.log(msg); };
+      } else {
+        logMsg = function() {};
+      }
       window.fgConvertCupsHasRunOnce = true;
-    } /*else {
-      console.log("Page already converted");
-    }*/
+    } else {
+      logMsg("Page already converted");
+    }
   };
 
+  wrapMatchedText = function(str, match) {
+    str = "<span class='fg-converted-cup'>" + str;
+    str += "<span>" + match + "</span>";
+    str += "</span>";
+    return str;
+  };
 
   // convertCupString is called from within the scope of a regular expression
   // (so is a string replace callback). The RegExp passes all groupings/substrings as
@@ -147,10 +158,7 @@ uk.co.firmgently.FGConvertCups = (function() {
       str = ml + "ml";
     }
 
-    str = "<span class='fg-converted-cup'>" + str;
-    str += "<span>" + match + "</span>";
-    str += "</span>";
-    return str;
+    return wrapMatchedText(str, match);
   };
 
   // constants is called from within the scope of a regular expression
@@ -170,30 +178,21 @@ uk.co.firmgently.FGConvertCups = (function() {
       str = fractionalised_ob.cups + " cups";
     }
 
-    str = "<span class='fg-converted-cup'>" + str;
-    str += "<span>" + match + "</span>";
-    str += "</span>";
-    return str;
+    return wrapMatchedText(str, match);
   };
 
   convertFahrString = function(match, degrees) {
     var celsius, str;
     celsius = Math.round(((degrees-32) * (5/9)) / TEMPERATURE_ROUNDING) * TEMPERATURE_ROUNDING;
     str = celsius + "&deg;C";
-    str = "<span class='fg-converted-cup'>" + str;
-    str += "<span>" + match + "</span>";
-    str += "</span>";
-    return str;
+    return wrapMatchedText(str, match);
   };
 
   convertCelsString = function(match, degrees) {
     var fahrenheit, str;
     fahrenheit = Math.round(((degrees * (9/5)) + 32) / TEMPERATURE_ROUNDING) * TEMPERATURE_ROUNDING;
     str = fahrenheit + "&deg;F";
-    str = "<span class='fg-converted-cup'>" + str;
-    str += "<span>" + match + "</span>";
-    str += "</span>";
-    return str;
+    return wrapMatchedText(str, match);
   };
 
   convertStringFraction = function(str) {
@@ -216,7 +215,7 @@ uk.co.firmgently.FGConvertCups = (function() {
 
     if (ar.length == 2) {
       fraction = parseFloat("0." + ar[1], 10);
-      // console.log("\tfraction: " + fraction);
+      logMsg("\tfraction: " + fraction);
       if (fraction < 0.07) {
         if (whole === 0) {
           fraction = "&#8530;"; // 1/10 (to avoid rounding a positive volume down to total zero)
@@ -243,45 +242,59 @@ uk.co.firmgently.FGConvertCups = (function() {
     }
 
     if (whole === 0 || (whole === 1 && fraction === "")) { singular = true; }
-    if (whole === 0) { whole = ""; } // convert zero to empty string
+    if (whole === 0) { whole = ""; } // convert zero number to empty string
 
     return { cups: whole + fraction, singular: singular};
   };
 
   // replaceTextInNode scans through a node replacing all cups with millilitres
   // then recurses into any child nodes
-  replaceTextInNode = function(parentNode) {
+  replaceTextInNode = function(node) {
     var
-    i, lastChildNodeIndex = parentNode.childNodes.length-1,
-    node, nodeParentElement;
+    lastChildNodeIndex = node.childNodes.length-1,
+    i, child, html, matchFound, replacementNode;
 
     for (i = lastChildNodeIndex; i >= 0; i--){
-      node = parentNode.childNodes[i];
+      child = node.childNodes[i];
+      matchFound = false;
 
-      if (node.nodeType == Element.TEXT_NODE && node.parentElement) {
-        nodeParentElement = node.parentElement;
-        if (measurementConvertTo === "ML") {
-          if (node.textContent.toLowerCase().indexOf("cup") !== -1) { // optimisation to prevent slow RegExp being run against every text node
-            nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpCups, convertCupString);
+      if (child.nodeType == Element.TEXT_NODE) {
+      // if (child.nodeType == Element.TEXT_NODE && child.parentElement) {
+        html = child.textContent;
+        // cup conversion
+        if (measurementConvertTo === "ML") { // convert to ml
+          if (html.toLowerCase().indexOf("cup") !== -1) { // optimisation to prevent slow RegExp being run against every text node
+            html = html.replace(regExpCups, convertCupString);
+            matchFound = true;
           }
-        } else {
-          if (node.textContent.match(regExpMlCheap)) { // optimisation to prevent slow RegExp being run against every text node
-            nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpMl, convertMlString);
+        } else { // convert to cups
+          if (html.match(regExpMlCheap)) { // optimisation to prevent slow RegExp being run against every text node
+            html = html.replace(regExpMl, convertMlString);
+            matchFound = true;
           }
         }
-        if (temperatureConvertTo === "C") {
+        // temp conversion
+        if (temperatureConvertTo === "C") { // convert to Celsius
           // do simple check for something that looks like a fahrenheit temp first
           // to save doing expensive replace with complex regex
-          if (node.textContent.match(regExpFahrCheap)) {
-            nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpFahr, convertFahrString);
+          if (html.match(regExpFahrCheap)) {
+            html = html.replace(regExpFahr, convertFahrString);
+            matchFound = true;
           }
-        } else {
-          if (node.textContent.match(regExpCelsCheap)) {
-            nodeParentElement.innerHTML = nodeParentElement.innerHTML.replace(regExpCels, convertCelsString);
+        } else { // convert to Fahrenheit
+          if (html.match(regExpCelsCheap)) {
+            html = html.replace(regExpCels, convertCelsString);
+            matchFound = true;
           }
         }
       } else if (node.nodeType == Element.ELEMENT_NODE){
-        replaceTextInNode(node); // recurse into child nodes
+        replaceTextInNode(child); // recurse into child nodes
+      }
+
+      if (matchFound) {
+        replacementNode = document.createElement("span");
+        replacementNode.innerHTML = html;
+        child.parentNode.replaceChild(replacementNode, child);
       }
     }
   };

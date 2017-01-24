@@ -1,6 +1,7 @@
 
 var
 constants = {
+  DEBUG_MODE: false,
   DEFAULT_CUPSIZE: 240,
   DEFAULT_MEASUREMENT_CONVERT_TO: 'ML',
   DEFAULT_TEMPERATURE_CONVERT_TO: 'C'
@@ -48,13 +49,21 @@ onStorageUpdateTitle = function(result){
 };
 
 updateTitle = function() {
-  // console.log("constants.DEFAULT_CUPSIZE: " + constants.DEFAULT_CUPSIZE);
+  // logMsg("constants.DEFAULT_CUPSIZE: " + constants.DEFAULT_CUPSIZE);
   chrome.storage.local.get({
     cupsize: constants.DEFAULT_CUPSIZE,
     measurementConvertTo: constants.DEFAULT_MEASUREMENT_CONVERT_TO,
     temperatureConvertTo: constants.DEFAULT_TEMPERATURE_CONVERT_TO
   }, onStorageUpdateTitle);
 };
+
+if (constants.DEBUG_MODE) {
+  logMsg = function(msg) {
+    console.log(msg);
+  };
+} else {
+  logMsg = function() {};
+}
 
 chrome.browserAction.onClicked.addListener(onClick);
 chrome.runtime.onMessage.addListener(onMessage);
